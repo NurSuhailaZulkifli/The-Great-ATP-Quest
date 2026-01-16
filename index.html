@@ -36,7 +36,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 1rem;
+            padding: 20px;
         }
 
         .glass-panel {
@@ -44,14 +44,33 @@
             backdrop-filter: blur(12px) saturate(160%);
             -webkit-backdrop-filter: blur(12px) saturate(160%);
             border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 2rem;
-            padding: 2rem;
+            border-radius: 2.5rem;
+            padding: 2.5rem;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            max-width: 800px;
-            width: 95%;
-            max-height: 95vh;
-            overflow-y: auto;
+            max-width: 900px;
+            width: 100%;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
             position: relative;
+        }
+
+        .scroll-container {
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        /* Custom Scrollbar */
+        .scroll-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        .scroll-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+        .scroll-container::-webkit-scrollbar-thumb {
+            background: rgba(56, 189, 248, 0.3);
+            border-radius: 10px;
         }
 
         .hub-button {
@@ -98,15 +117,6 @@
         .name-input:focus {
             border-bottom-color: #ffffff;
         }
-
-        /* Hide scrollbar but keep functionality */
-        .glass-panel::-webkit-scrollbar {
-            display: none;
-        }
-        .glass-panel {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
     </style>
 </head>
 <body onclick="void(0)">
@@ -120,7 +130,7 @@
                 href={link}
                 onMouseEnter={onHover}
                 onClick={onClick}
-                className="hub-button block w-full mb-4 p-4 rounded-xl flex items-center gap-6 group cursor-pointer"
+                className="hub-button block w-full mb-4 p-5 rounded-2xl flex items-center gap-6 group cursor-pointer"
             >
                 <div className="flex-shrink-0 w-16 h-16 rounded-xl bg-slate-900/60 flex items-center justify-center text-3xl font-black roman-numeral border border-white/20">
                     {roman}
@@ -154,52 +164,129 @@
                 return audioCtxRef.current;
             };
 
-            const playMagicChimes = async (isClick = false) => {
+            const playImpact = async () => {
                 const ctx = await getCtx();
                 const now = ctx.currentTime;
                 const master = ctx.createGain();
-                master.gain.setValueAtTime(isClick ? 1.5 : 0.8, now);
+                // HIGH VOLUME BOOST (1.8 instead of 1.2)
+                master.gain.setValueAtTime(1.8, now);
                 master.connect(ctx.destination);
 
-                const noteCount = isClick ? 12 : 6;
-                const duration = isClick ? 1.5 : 0.8;
-                
-                for (let i = 0; i < noteCount; i++) {
+                for (let i = 0; i < 3; i++) {
                     const osc = ctx.createOscillator();
                     const g = ctx.createGain();
-                    const frequencies = [880, 987, 1174, 1318, 1567, 1760, 2093];
-                    const baseFreq = frequencies[i % frequencies.length];
-                    
                     osc.type = 'sine';
-                    const startTime = now + (i * (duration / noteCount));
-                    
-                    osc.frequency.setValueAtTime(baseFreq, startTime);
-                    osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.05, startTime + 0.2);
-
-                    g.gain.setValueAtTime(0, startTime);
-                    g.gain.linearRampToValueAtTime(0.3, startTime + 0.05);
-                    g.gain.exponentialRampToValueAtTime(0.001, startTime + 0.4);
-
+                    osc.frequency.setValueAtTime(40 + (i * 20), now);
+                    osc.frequency.exponentialRampToValueAtTime(1, now + 1.5);
+                    g.gain.setValueAtTime(1.0, now);
+                    g.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
                     osc.connect(g);
                     g.connect(master);
+                    osc.start();
+                    osc.stop(now + 1.5);
+                }
 
-                    osc.start(startTime);
-                    osc.stop(startTime + 0.5);
+                const noise = ctx.createOscillator();
+                const noiseG = ctx.createGain();
+                noise.type = 'triangle';
+                noise.frequency.setValueAtTime(800, now);
+                noise.frequency.exponentialRampToValueAtTime(100, now + 0.2);
+                noiseG.gain.setValueAtTime(0.5, now);
+                noiseG.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+                noise.connect(noiseG);
+                noiseG.connect(master);
+                noise.start();
+                noise.stop(now + 0.2);
+            };
+
+            const playEpicHover = async (freq = 110) => {
+                const ctx = await getCtx();
+                const now = ctx.currentTime;
+                const master = ctx.createGain();
+                // HIGH VOLUME BOOST (1.2 instead of 0.8)
+                master.gain.setValueAtTime(1.2, now);
+                master.connect(ctx.destination);
+
+                [1, 1.5, 2].forEach(mult => {
+                    const osc = ctx.createOscillator();
+                    const filter = ctx.createBiquadFilter();
+                    const g = ctx.createGain();
+
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(freq * mult, now);
+                    osc.detune.setValueAtTime(Math.random() * 10, now);
+
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(100, now);
+                    filter.frequency.exponentialRampToValueAtTime(2000, now + 0.4);
+
+                    g.gain.setValueAtTime(0, now);
+                    g.gain.linearRampToValueAtTime(0.6, now + 0.1);
+                    g.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+
+                    osc.connect(filter);
+                    filter.connect(g);
+                    g.connect(master);
+
+                    osc.start();
+                    osc.stop(now + 0.8);
+                });
+            };
+
+            const playNameFinishSound = async () => {
+                const ctx = await getCtx();
+                const now = ctx.currentTime;
+                const master = ctx.createGain();
+                master.gain.setValueAtTime(1.5, now);
+                master.connect(ctx.destination);
+
+                const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6 chime
+                notes.forEach((freq, i) => {
+                    const osc = ctx.createOscillator();
+                    const g = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now + (i * 0.1));
+                    g.gain.setValueAtTime(0, now + (i * 0.1));
+                    g.gain.linearRampToValueAtTime(0.4, now + (i * 0.1) + 0.05);
+                    g.gain.exponentialRampToValueAtTime(0.001, now + (i * 0.1) + 0.4);
+                    
+                    osc.connect(g);
+                    g.connect(master);
+                    osc.start(now + (i * 0.1));
+                    osc.stop(now + (i * 0.1) + 0.4);
+                });
+            };
+
+            const handleNameBlur = (e) => {
+                if (e.target.value.trim().length > 0) {
+                    playNameFinishSound();
+                }
+            };
+
+            const handleNameKeyDown = (e) => {
+                if (e.key === 'Enter') {
+                    e.target.blur();
                 }
             };
 
             return (
                 <div className="conquest-bg" onClick={() => getCtx()}>
                     <div className="glass-panel text-center">
-                        <header className="mb-8">
+                        <header className="mb-8 flex-shrink-0">
                             <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter animate-title drop-shadow-2xl">
                                 THE GREAT <span className="text-sky-400">ATP</span> CONQUEST
                             </h1>
-                            <div className="h-1 w-24 bg-sky-400/70 mx-auto mt-4 rounded-full shadow-lg"></div>
+                            <div className="h-1.5 w-24 bg-sky-400/70 mx-auto mt-4 rounded-full shadow-lg"></div>
                             
                             <div className="mt-6 flex flex-col items-center gap-3">
-                                <div className="text-xl text-sky-200 font-bold flex items-center gap-2">
-                                    Hey, <input type="text" className="name-input text-center" placeholder="Write your name" />!
+                                <div className="text-xl text-sky-200 font-bold flex items-center gap-3">
+                                    Hey, <input 
+                                        type="text" 
+                                        className="name-input text-center" 
+                                        placeholder="Write your name" 
+                                        onBlur={handleNameBlur}
+                                        onKeyDown={handleNameKeyDown}
+                                    />
                                 </div>
                                 <div>
                                     <p className="subtitle-shadow text-xl text-white font-extrabold italic tracking-tight">
@@ -209,30 +296,30 @@
                             </div>
                         </header>
                         
-                        <div className="max-w-xl mx-auto py-2">
+                        <div className="scroll-container max-w-2xl mx-auto w-full">
                             <HubButton 
                                 roman="I"
                                 title="The Mitochondrial Command Center"
                                 subtext="The Components"
-                                link="mitochondrial_command_center.html"
-                                onHover={() => playMagicChimes(false)}
-                                onClick={(e) => { e.preventDefault(); playMagicChimes(true); setTimeout(() => window.location.href=e.currentTarget.href, 800); }}
+                                link="intro.html"
+                                onHover={() => playEpicHover(82.41)}
+                                onClick={(e) => { e.preventDefault(); playImpact(); setTimeout(() => window.location.href=e.currentTarget.href, 600); }}
                             />
                             <HubButton 
                                 roman="II"
                                 title="The Amazing Electron Trail"
                                 subtext="Electron Transport Chain"
-                                link="electron_trail.html"
-                                onHover={() => playMagicChimes(false)}
-                                onClick={(e) => { e.preventDefault(); playMagicChimes(true); setTimeout(() => window.location.href=e.currentTarget.href, 800); }}
+                                link="etc.html"
+                                onHover={() => playEpicHover(98.00)}
+                                onClick={(e) => { e.preventDefault(); playImpact(); setTimeout(() => window.location.href=e.currentTarget.href, 600); }}
                             />
                             <HubButton 
                                 roman="III"
                                 title="The Proton Odyssey: ATP Victory"
                                 subtext="Chemiosmosis"
-                                link="proton_odyssey.html"
-                                onHover={() => playMagicChimes(false)}
-                                onClick={(e) => { e.preventDefault(); playMagicChimes(true); setTimeout(() => window.location.href=e.currentTarget.href, 800); }}
+                                link="chemiosmosis.html"
+                                onHover={() => playEpicHover(110.00)}
+                                onClick={(e) => { e.preventDefault(); playImpact(); setTimeout(() => window.location.href=e.currentTarget.href, 600); }}
                             />
                         </div>
                     </div>
