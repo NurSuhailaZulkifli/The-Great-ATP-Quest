@@ -60,7 +60,6 @@
             padding-right: 10px;
         }
 
-        /* Custom Scrollbar */
         .scroll-container::-webkit-scrollbar {
             width: 6px;
         }
@@ -119,11 +118,11 @@
         }
     </style>
 </head>
-<body onclick="void(0)">
+<body>
     <div id="root" class="h-full"></div>
 
     <script type="text/babel">
-        const { useState, useRef, useEffect } = React;
+        const { useRef } = React;
 
         const HubButton = ({ title, roman, subtext, link, onHover, onClick }) => (
             <a 
@@ -168,7 +167,6 @@
                 const ctx = await getCtx();
                 const now = ctx.currentTime;
                 const master = ctx.createGain();
-                // HIGH VOLUME BOOST (1.8 instead of 1.2)
                 master.gain.setValueAtTime(1.8, now);
                 master.connect(ctx.destination);
 
@@ -203,7 +201,6 @@
                 const ctx = await getCtx();
                 const now = ctx.currentTime;
                 const master = ctx.createGain();
-                // HIGH VOLUME BOOST (1.2 instead of 0.8)
                 master.gain.setValueAtTime(1.2, now);
                 master.connect(ctx.destination);
 
@@ -240,7 +237,7 @@
                 master.gain.setValueAtTime(1.5, now);
                 master.connect(ctx.destination);
 
-                const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6 chime
+                const notes = [523.25, 659.25, 783.99, 1046.50];
                 notes.forEach((freq, i) => {
                     const osc = ctx.createOscillator();
                     const g = ctx.createGain();
@@ -303,7 +300,11 @@
                                 subtext="The Components"
                                 link="intro.html"
                                 onHover={() => playEpicHover(82.41)}
-                                onClick={(e) => { e.preventDefault(); playImpact(); setTimeout(() => window.location.href=e.currentTarget.href, 600); }}
+                                onClick={(e) => { 
+                                    e.preventDefault(); 
+                                    playImpact(); 
+                                    setTimeout(() => window.location.href = e.currentTarget.href, 600); 
+                                }}
                             />
                             <HubButton 
                                 roman="II"
@@ -311,7 +312,11 @@
                                 subtext="Electron Transport Chain"
                                 link="etc.html"
                                 onHover={() => playEpicHover(98.00)}
-                                onClick={(e) => { e.preventDefault(); playImpact(); setTimeout(() => window.location.href=e.currentTarget.href, 600); }}
+                                onClick={(e) => { 
+                                    e.preventDefault(); 
+                                    playImpact(); 
+                                    setTimeout(() => window.location.href = e.currentTarget.href, 600); 
+                                }}
                             />
                             <HubButton 
                                 roman="III"
@@ -319,7 +324,11 @@
                                 subtext="Chemiosmosis"
                                 link="chemiosmosis.html"
                                 onHover={() => playEpicHover(110.00)}
-                                onClick={(e) => { e.preventDefault(); playImpact(); setTimeout(() => window.location.href=e.currentTarget.href, 600); }}
+                                onClick={(e) => { 
+                                    e.preventDefault(); 
+                                    playImpact(); 
+                                    setTimeout(() => window.location.href = e.currentTarget.href, 600); 
+                                }}
                             />
                         </div>
                     </div>
