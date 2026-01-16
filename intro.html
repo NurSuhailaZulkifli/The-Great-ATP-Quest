@@ -103,6 +103,7 @@
                 { text: "ATP synthase", type: "protein" }
             ];
 
+            // UPDATED: Only retain the first narrator for step 1
             const speakStep = (stepNumber) => {
                 const messages = {
                     0: "Identify the stages of oxidative phosphorylation?",
@@ -153,4 +154,25 @@
 
             useEffect(() => {
                 const shuffled = [...gameSequence].map(item => item.text).sort(() => Math.random() - 0.5);
-                setAvailableTerms(s
+                setAvailableTerms(shuffled);
+                speakStep(0);
+            }, []);
+
+            useEffect(() => {
+                if ([0, 2, 3, 9].includes(currentStep)) { // updated: removed step 1
+                    speakStep(currentStep);
+                }
+            }, [currentStep]);
+
+            const handleDrop = async (e, targetName) => {
+                e.preventDefault();
+                const draggedText = e.dataTransfer.getData("text");
+                const expected = gameSequence[currentStep];
+
+                if (draggedText.toLowerCase() === expected.text.toLowerCase()) {
+                    playSound('correct');
+                    setCompletedTerms([...completedTerms, draggedText]);
+                    setAvailableTerms(availableTerms.filter(t => t !== draggedText));
+                    setCurrentStep(currentStep + 1);
+                } else {
+                    playS
